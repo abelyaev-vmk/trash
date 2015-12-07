@@ -1,0 +1,136 @@
+#include "ClothSim.h"
+#include <cstdint>
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ClothMeshData CreateTest2Vertices()
+{
+   ClothMeshData mdata;
+
+   mdata.vertPos0.resize(2);
+   mdata.vertVel0.resize(2);
+   mdata.vertPos1.resize(2);
+   mdata.vertVel1.resize(2);
+
+   mdata.vertForces.resize(2);
+   mdata.vertMassInv.resize(2);
+
+   mdata.edgeIndices.resize(2);
+   mdata.edgeHardness.resize(mdata.edgeIndices.size() / 2);
+   mdata.edgeInitialLen.resize(mdata.edgeIndices.size() / 2);
+
+   mdata.vertPos0[0] = float4(0, 0.4, 0, 1); // WARNING, we must always set w = 1 for positions; 
+   mdata.vertPos0[1] = float4(0, 0.1, 0, 1); // this is essential for further vertex transform in shader
+
+   mdata.vertVel0[0] = float4(0, 0, 0, 0);
+   mdata.vertVel0[1] = float4(0, 0, 0, 0);
+
+   mdata.vertPos1 = mdata.vertPos0;
+   mdata.vertVel1 = mdata.vertVel0;
+
+   mdata.vertMassInv[0] = 1.0f / 1e20f; // we can model static vertices as a vertices with very big mass; didn't say this is good, but simple :)
+   mdata.vertMassInv[1] = 1.0f;
+
+   mdata.edgeIndices[0] = 0;
+   mdata.edgeIndices[1] = 1;
+
+   mdata.edgeHardness[0] = 1.0f;
+   mdata.edgeInitialLen[0] = 0.2f;
+
+   mdata.g_wind = float4(0, 0, 0, 0);
+
+
+   // you can use any intermediate mesh representation or load data to GPU (in VBOs) here immediately.                              <<===== !!!!!!!!!!!!!!!!!!
+
+   // create graphics mesh; SimpleMesh uses GLUS Shape to store geometry; 
+   // we copy data to GLUS Shape, and then these data will be copyed later from GLUS shape to GPU 
+   //
+   mdata.pMesh = std::make_shared<SimpleMesh>();
+
+   GLUSshape& shape = mdata.pMesh->m_glusShape;
+
+   shape.numberVertices = mdata.vertPos0.size();
+   shape.numberIndices = mdata.edgeIndices.size();
+
+   shape.vertices = (GLUSfloat*)malloc(4 * shape.numberVertices * sizeof(GLUSfloat));
+   shape.indices = (GLUSuint*)malloc(shape.numberIndices * sizeof(GLUSuint));
+
+   memcpy(shape.vertices, &mdata.vertPos0[0], sizeof(float) * 4 * shape.numberVertices);
+   memcpy(shape.indices, &mdata.edgeIndices[0], sizeof(int) * shape.numberIndices);
+
+   // for tri mesh you will need normals, texCoords and different indices
+   // 
+
+   return mdata;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ClothMeshData::updatePositionsGPU()
+{
+  if (pMesh == nullptr)
+    return;
+
+  // copy current vertex positions to positions VBO
+ 
+}
+
+void ClothMeshData::updateNormalsGPU()
+{
+  if (pMesh == nullptr || this->vertNormals.size() == 0)
+    return;
+
+  // copy current recalculated normals to appropriate VBO on GPU
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SimStep(ClothMeshData* pMesh, float delta_t)
+{
+
+   // get in and out pointers
+   //
+   float4* inVertPos = pMesh->pinPong ? &pMesh->vertPos1[0] : &pMesh->vertPos0[0];
+   float4* inVertVel = pMesh->pinPong ? &pMesh->vertVel1[0] : &pMesh->vertVel0[0];
+
+   float4* outVertPos = pMesh->pinPong ? &pMesh->vertPos0[0] : &pMesh->vertPos1[0];
+   float4* outVertVel = pMesh->pinPong ? &pMesh->vertVel0[0] : &pMesh->vertVel1[0];
+
+   // accumulate forces first
+   //
+   for (size_t i = 0; i < pMesh->vertForces.size(); i++) // clear all forces
+      pMesh->vertForces[i] = float4(0, 0, 0, 0);
+
+   for (int connectId = 0; connectId < pMesh->connectionNumber(); connectId++)
+   {
+
+   }
+
+   // update positions and velocity
+   //
+   for (int connectId = 0; connectId < pMesh->connectionNumber(); connectId++)
+   {
+
+   }
+
+   pMesh->pinPong = !pMesh->pinPong; // swap pointers for next sim step
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RecalculateNormals(ClothMeshData* pMesh)
+{
+
+}
+
